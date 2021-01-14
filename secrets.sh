@@ -432,20 +432,23 @@ EOF
 		break
 		;;
             -f|--values)
-		cmdopts+=("$1")
 		yml="$2"
 		# increase support for -f=myfile.yaml or -f=myfile (helm support both spaces and equal sign)
 		if [[ $yml =~ ^=.*$ ]]; then
 		    yml="${yml/=/}"
 		fi
-		if [[ $yml =~ ^(.*/)?secrets(\.[^.]+)*\.yaml$ ]]
-		then
-		    decrypt_helper $yml ymldec decrypted
-		    cmdopts+=("$ymldec")
-		    [[ $decrypted -eq 1 ]] && decfiles+=("$ymldec")
-		else
-		    cmdopts+=("$yml")
-		fi
+                # When ignore is set, ignore files that do not exist
+                if ! [ -a ".helm-ignore-missing-values" ] || [ -a "$yml" ]; then
+  		    cmdopts+=("$1")
+                    if [[ $yml =~ ^(.*/)?secrets(\.[^.]+)*\.yaml$ ]]
+                    then
+                        decrypt_helper $yml ymldec decrypted
+                        cmdopts+=("$ymldec")
+                        [[ $decrypted -eq 1 ]] && decfiles+=("$ymldec")
+                    else
+                        cmdopts+=("$yml")
+                    fi
+                fi
 		shift # to also skip option arg
 		;;
 	    *)
